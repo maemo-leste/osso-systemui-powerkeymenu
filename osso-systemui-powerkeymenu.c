@@ -97,7 +97,6 @@ powerkeymenu_get_window_class (Window w)
          * second string.
          */
         gint len0 = strlen ((char*)r_prop);
-        printf("%s\n",r_prop);
         if (len0 == n_items)
           len0--;
 
@@ -125,8 +124,7 @@ powerkeymenu_is_desktop_active (void)
 
     if(wm_class)
     {
-      /* FIXME - does it really make sense? */
-      if(strcmp(wm_class,"desktop"))
+      if(!strstr(wm_class,"desktop"))
         rv = FALSE;
 
       g_free(wm_class);
@@ -136,6 +134,48 @@ powerkeymenu_is_desktop_active (void)
   gdk_flush();
   gdk_error_trap_pop();
   return rv;
+}
+
+static void
+powerkeymenu_close_topmost_window(void)
+{
+  Window active_window;
+  gboolean desktop = TRUE;
+
+  gdk_error_trap_push();
+  active_window = powerkeymenu_get_current_app_window();
+
+  if(active_window)
+  {
+    gchar *wm_class = powerkeymenu_get_window_class(active_window);
+
+    if(wm_class)
+    {
+      if(!strstr(wm_class,"desktop"))
+        desktop = FALSE;
+
+      g_free(wm_class);
+    }
+  }
+
+  if(!desktop)
+  {
+    XEvent ev;
+    memset(&ev, 0, sizeof(ev));
+
+    ev.xclient.type         = ClientMessage;
+    ev.xclient.window       = active_window;
+    ev.xclient.message_type = gdk_x11_get_xatom_by_name ("_NET_CLOSE_WINDOW");
+    ev.xclient.format       = 32;
+    ev.xclient.data.l[0]    = CurrentTime;
+    ev.xclient.data.l[1]    = GDK_WINDOW_XID (gdk_get_default_root_window ());
+
+    XSendEvent (GDK_DISPLAY(), GDK_ROOT_WINDOW(), False, SubstructureRedirectMask, &ev);
+    XSync(GDK_DISPLAY(), False);
+  }
+
+  gdk_flush();
+  gdk_error_trap_pop();
 }
 
 static void
@@ -254,6 +294,7 @@ powerkeymenu_dbus_message_append_args(DBusMessage *msg, ezxml_t ezargs)
 {
   void *val;
   system_ui_handler_arg tmp;
+
   while(ezargs)
   {
     val = powerkeymenu_dbus_message_get_arg(ezargs, &tmp);
@@ -274,7 +315,6 @@ powerkeymenu_button_clicked(GtkButton *button,gpointer data)
 
   g_return_if_fail(ex != NULL);
 
-
   retval = ezxml_child(ex, "return");
   callback = ezxml_child(ex, "callback");
 
@@ -283,9 +323,9 @@ powerkeymenu_button_clicked(GtkButton *button,gpointer data)
     switch(atol(retval->txt))
     {
       case 8:
-      hildon_banner_show_information(NULL, NULL,
-                                     dgettext("osso-powerup-shutdown",
-                                              "powerup_ib_silent_activated"));
+        hildon_banner_show_information(NULL, NULL,
+                                       dgettext("osso-powerup-shutdown",
+                                                "powerup_ib_silent_activated"));
       break;
       case 9:
         hildon_banner_show_information(NULL, NULL,
@@ -293,8 +333,15 @@ powerkeymenu_button_clicked(GtkButton *button,gpointer data)
                                                 "powerup_ib_general_activated"));
         break;
     }
+
+    /* FIXME - do we really need to skip mce callback? */
     if(!callback)
-      powerkeymenu_do_callback(atol(retval->txt), ui);
+    {
+      if(atol(retval->txt) == 10)
+        powerkeymenu_close_topmost_window();
+      else
+        powerkeymenu_do_callback(atol(retval->txt), ui);
+    }
   }
 
   if(callback)
@@ -515,8 +562,8 @@ powerkeymenu_destroy_menu()
   {
 #if !defined(POWERKEYMENU_STANDALONE)
     ipm_hide_window(power_key_window);
-#endif
     powerkeymenu_do_callback(-6, ui);
+#endif
     gtk_widget_destroy(power_key_window);
     power_key_window = NULL;
     g_object_unref(power_key_menu);
