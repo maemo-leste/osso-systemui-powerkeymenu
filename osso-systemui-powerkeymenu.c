@@ -509,6 +509,7 @@ powerkeymenu_destroy_menu()
     powerkeymenu_do_callback(-6, ui);
     gtk_widget_destroy(power_key_window);
     power_key_window = NULL;
+    powerkeymenu_xml_free();
   }
 }
 
@@ -520,6 +521,7 @@ power_key_menu_unmap_event_cb(GtkWidget *widget,
   SYSTEMUI_DEBUG_FN;
 
   powerkeymenu_destroy_menu();
+
   return FALSE;
 }
 
@@ -631,7 +633,9 @@ powerkeymenu_close_handler(const char *interface,
     ipm_hide_window(GTK_WIDGET(power_key_window));
     gtk_widget_destroy(GTK_WIDGET(power_key_window));
     power_key_window = NULL;
+    powerkeymenu_xml_free();
   }
+
   systemui_free_callback(&power_key_menu_callback);
 
   return 'v';
