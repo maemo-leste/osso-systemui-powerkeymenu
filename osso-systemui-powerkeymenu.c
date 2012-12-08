@@ -274,6 +274,7 @@ powerkeymenu_button_clicked(GtkButton *button,gpointer data)
 
   g_return_if_fail(ex != NULL);
 
+
   retval = ezxml_child(ex, "return");
   callback = ezxml_child(ex, "callback");
 
@@ -292,6 +293,8 @@ powerkeymenu_button_clicked(GtkButton *button,gpointer data)
                                                 "powerup_ib_general_activated"));
         break;
     }
+    if(!callback)
+      powerkeymenu_do_callback(atol(retval->txt), ui);
   }
 
   if(callback)
@@ -334,6 +337,11 @@ powerkeymenu_button_clicked(GtkButton *button,gpointer data)
         SYSTEMUI_WARNING("connecting to %s bus failed", bus);
 
       dbus_message_unref(msg);
+      if(connection)
+      {
+        dbus_connection_flush(connection);
+        dbus_connection_unref(connection);
+      }
     }
   }
 }
@@ -505,10 +513,14 @@ powerkeymenu_destroy_menu()
 {
   if(power_key_window)
   {
+#if !defined(POWERKEYMENU_STANDALONE)
     ipm_hide_window(power_key_window);
+#endif
     powerkeymenu_do_callback(-6, ui);
     gtk_widget_destroy(power_key_window);
     power_key_window = NULL;
+    g_object_unref(power_key_menu);
+    power_key_menu = NULL;
     powerkeymenu_xml_free();
   }
 }
@@ -562,6 +574,7 @@ powerkeymenu_show_menu()
     ipm_show_window(GTK_WIDGET(power_key_menu), power_key_menu_priority);
 #endif
     hildon_app_menu_popup(power_key_menu,GTK_WINDOW(power_key_window));
+
     g_signal_connect_after(power_key_menu,
                            "unmap-event",
                            (GCallback)power_key_menu_unmap_event_cb,
@@ -633,6 +646,8 @@ powerkeymenu_close_handler(const char *interface,
     ipm_hide_window(GTK_WIDGET(power_key_window));
     gtk_widget_destroy(GTK_WIDGET(power_key_window));
     power_key_window = NULL;
+    g_object_unref(power_key_menu);
+    power_key_menu = NULL;
     powerkeymenu_xml_free();
   }
 
