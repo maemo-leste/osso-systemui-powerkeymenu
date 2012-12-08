@@ -32,9 +32,105 @@ system_ui_callback_t power_key_menu_callback = {0,};
 power_key_menu_t power_key_menu={0,};
 gint state = -1;
 gint power_key_menu_priority = 0;
-GHashTable *model;
 
 /* Forward declarations */
+
+/* Code :) */
+
+static Window
+powerkeymenu_get_current_app_window (void)
+{
+  unsigned long n;
+  unsigned long extra;
+  int format;
+  int status;
+
+  Atom atom_current_app_window = gdk_x11_get_xatom_by_name ("_MB_CURRENT_APP_WINDOW");
+  Atom realType;
+  Window win_result = None;
+  guchar *data_return = NULL;
+
+  status = XGetWindowProperty (GDK_DISPLAY(), GDK_ROOT_WINDOW (),
+                               atom_current_app_window, 0L, 16L,
+                               0, XA_WINDOW, &realType, &format,
+                               &n, &extra,
+                               &data_return);
+
+  if (status == Success && realType == XA_WINDOW && format == 32 && n == 1 && data_return != NULL)
+  {
+    win_result = ((Window*) data_return)[0];
+  }
+
+  if (data_return)
+    XFree (data_return);
+
+  return win_result;
+}
+
+static gchar*
+powerkeymenu_get_window_class (Window w)
+{
+  Atom r_type;
+  int  r_fmt;
+  unsigned long n_items;
+  unsigned long r_after;
+  unsigned char *r_prop;
+  gchar *rv = NULL;
+
+  if (Success == XGetWindowProperty (GDK_DISPLAY (), w, XA_WM_CLASS,
+                                     0, 8192,
+                                     False, XA_STRING,
+                                     &r_type, &r_fmt, &n_items, &r_after,
+                                     (unsigned char **)&r_prop) && r_type != 0)
+  {
+    if (r_prop)
+      {
+        /*
+         * The property contains two strings separated by \0; we want the
+         * second string.
+         */
+        gint len0 = strlen ((char*)r_prop);
+        printf("%s\n",r_prop);
+        if (len0 == n_items)
+          len0--;
+
+        rv = g_strdup ((char*)r_prop + len0 + 1);
+
+        XFree (r_prop);
+      }
+  }
+
+  return rv;
+}
+
+static gboolean
+powerkeymenu_is_desktop_active (void)
+{
+  Window active_window;
+  gboolean rv = TRUE;
+
+  gdk_error_trap_push();
+  active_window = powerkeymenu_get_current_app_window();
+
+  if(active_window)
+  {
+    gchar *wm_class = powerkeymenu_get_window_class(active_window);
+
+    if(wm_class)
+    {
+      /* FIXME - does it really make sense? */
+      if(strcmp(wm_class,"desktop"))
+        rv = FALSE;
+
+      g_free(wm_class);
+    }
+  }
+
+  gdk_flush();
+  gdk_error_trap_pop();
+  return rv;
+}
+
 static void
 powerkeymenu_init_menu(const gchar* path)
 {
@@ -80,11 +176,20 @@ powerkeymenu_add_menu_entry(ezxml_t ex, void *data)
   ezxml_t po;
   ezxml_t icon;
   ezxml_t keyfile;
+  ezxml_t retval;
   const char *title;
   const char *disabled_title = NULL;
   gboolean enabled = TRUE;
 
   menu = (HildonAppMenu*)data;
+
+  retval = ezxml_child(ex, "return");
+  if(retval && retval->txt && atol(retval->txt) == 10)
+  {
+    /* Do not add 'End current task' if the active window is desktop */
+    if(powerkeymenu_is_desktop_active())
+      return;
+  }
 
   keyfile = ezxml_child(ex, "keyfile");
   if(keyfile && keyfile->txt)
