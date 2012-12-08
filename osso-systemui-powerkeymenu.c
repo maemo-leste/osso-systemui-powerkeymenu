@@ -26,14 +26,21 @@
 #include "osso-systemui-powerkeymenu.h"
 #include "xmlparser.h"
 
+//#define POWERKEYMENU_STANDALONE
+
 /* Globals */
 system_ui_data *ui;
 system_ui_callback_t power_key_menu_callback = {0,};
-power_key_menu_t power_key_menu={0,};
+
+GtkWidget *power_key_window = NULL;
+HildonAppMenu *power_key_menu=NULL;
+
 gint state = -1;
 gint power_key_menu_priority = 0;
 
 /* Forward declarations */
+static void
+powerkeymenu_do_callback(int argc, system_ui_data *data);
 
 /* Code :) */
 
@@ -137,6 +144,8 @@ powerkeymenu_init_menu(const gchar* path)
   GDir *dir;
   const gchar *direntry;
 
+  SYSTEMUI_DEBUG_FN;
+
   powerkeymenu_xml_free();
 
   dir = g_dir_open(path, 0, NULL);
@@ -162,10 +171,171 @@ powerkeymenu_init_menu(const gchar* path)
   powerkeymenu_xml_sort_menu();
 }
 
-static void
-powerkeymenu_button_clicked(GtkButton *button,gpointer   user_data)
+static void*
+powerkeymenu_dbus_message_get_arg(ezxml_t ezarg, system_ui_handler_arg *val)
 {
+  const char *s = ezxml_attr(ezarg, "type");
 
+  val->arg_type = DBUS_TYPE_INVALID;
+  if(!s)
+  {
+    return &val->data;
+  }
+
+  if(!strcmp(s,"string"))
+  {
+    val->arg_type = DBUS_TYPE_STRING;
+    val->data.str = ezarg->txt;
+    return &val->data.str;
+  }
+  else if(!strcmp(s,"byte"))
+  {
+    val->arg_type = DBUS_TYPE_BYTE;
+    val->data.byt = strtol(ezarg->txt, NULL, 10);
+    return &val->data.byt;
+  }
+  else if(!strcmp(s,"boolean"))
+  {
+    val->arg_type = DBUS_TYPE_BOOLEAN;
+    if(!strcmp(ezarg->txt, "true"))
+      val->data.bool_val = TRUE;
+    else
+      val->data.bool_val = FALSE;
+    return &val->data.bool_val;
+  }
+  else if(!strcmp(s,"int16"))
+  {
+    val->arg_type = DBUS_TYPE_INT16;
+    val->data.i16 = strtol(ezarg->txt, NULL, 10);
+    return &val->data.i16;
+  }
+  else if(!strcmp(s,"uint16"))
+  {
+    val->arg_type = DBUS_TYPE_UINT16;
+    val->data.u16 = strtoul(ezarg->txt, NULL, 10);
+    return &val->data.u16;
+  }
+  else if(!strcmp(s,"int32"))
+  {
+    val->arg_type = DBUS_TYPE_INT32;
+    val->data.i32 = strtol(ezarg->txt, NULL, 10);
+    return &val->data.i32;
+  }
+  else if(!strcmp(s,"uint32"))
+  {
+    val->arg_type = DBUS_TYPE_UINT32;
+    val->data.u32 = strtoul(ezarg->txt, NULL, 10);
+    return &val->data.u32;
+  }
+  else if(!strcmp(s,"int64"))
+  {
+    val->arg_type = DBUS_TYPE_INT64;
+    val->data.i64 = strtoll(ezarg->txt, NULL, 10);
+    return &val->data.i64;
+  }
+  else if(!strcmp(s,"uint64"))
+  {
+    val->arg_type = DBUS_TYPE_UINT64;
+    val->data.u64 = strtoull(ezarg->txt, NULL, 10);
+    return &val->data.u64;
+  }
+  else if(!strcmp(s,"double"))
+  {
+    val->arg_type = DBUS_TYPE_DOUBLE;
+    val->data.dbl = strtod(ezarg->txt, NULL);
+    return &val->data.dbl;
+  }
+
+  return &val->data;
+}
+
+static void
+powerkeymenu_dbus_message_append_args(DBusMessage *msg, ezxml_t ezargs)
+{
+  void *val;
+  system_ui_handler_arg tmp;
+  while(ezargs)
+  {
+    val = powerkeymenu_dbus_message_get_arg(ezargs, &tmp);
+    if(tmp.arg_type != DBUS_TYPE_INVALID)
+      dbus_message_append_args(msg, tmp.arg_type, val, DBUS_TYPE_INVALID);
+    ezargs = ezargs->next;
+  }
+}
+
+static void
+powerkeymenu_button_clicked(GtkButton *button,gpointer data)
+{
+  ezxml_t ex=(ezxml_t)data;
+  ezxml_t callback;
+  ezxml_t retval;
+
+  SYSTEMUI_DEBUG_FN;
+
+  g_return_if_fail(ex != NULL);
+
+  retval = ezxml_child(ex, "return");
+  callback = ezxml_child(ex, "callback");
+
+  if(retval && retval->txt)
+  {
+    switch(atol(retval->txt))
+    {
+      case 8:
+      hildon_banner_show_information(NULL, NULL,
+                                     dgettext("osso-powerup-shutdown",
+                                              "powerup_ib_silent_activated"));
+      break;
+      case 9:
+        hildon_banner_show_information(NULL, NULL,
+                                       dgettext("osso-powerup-shutdown",
+                                                "powerup_ib_general_activated"));
+        break;
+    }
+  }
+
+  if(callback)
+  {
+    const gchar *service = ezxml_attr(callback, "service");
+    const gchar *path = ezxml_attr(callback, "path");
+    const gchar *interface = ezxml_attr(callback, "interface");
+    const gchar *method = ezxml_attr(callback, "method");
+    const gchar *signal = ezxml_attr(callback, "signal");
+    const gchar *bus = ezxml_attr(callback, "bus");
+    const gchar *autostart = ezxml_attr(callback, "autostart");
+    DBusMessage *msg = NULL;
+
+    if(path && interface && bus )
+    {
+      if(service && method)
+        msg = dbus_message_new_method_call(service, path, interface, method);
+      else if(signal)
+        msg = dbus_message_new_signal(path, interface, signal);
+    }
+
+    if(!msg)
+      SYSTEMUI_WARNING("Invalid callback parameters");
+    else
+    {
+      DBusConnection *connection;
+
+      if(autostart && !(strcmp(autostart, "yes")))
+        dbus_message_set_auto_start(msg, TRUE);
+      else
+        dbus_message_set_auto_start(msg, FALSE);
+
+      dbus_message_set_no_reply(msg, TRUE);
+      powerkeymenu_dbus_message_append_args(msg, ezxml_child(callback, "argument"));
+      connection = dbus_bus_get(!strcmp(bus, "session")?DBUS_BUS_SESSION:DBUS_BUS_SYSTEM, NULL);
+
+      if(connection)
+        dbus_connection_send(connection, msg, NULL);
+      else
+        SYSTEMUI_WARNING("connecting to %s bus failed", bus);
+
+      dbus_message_unref(msg);
+    }
+  }
 }
 
 static void
@@ -180,6 +350,8 @@ powerkeymenu_add_menu_entry(ezxml_t ex, void *data)
   const char *title;
   const char *disabled_title = NULL;
   gboolean enabled = TRUE;
+
+  SYSTEMUI_DEBUG_FN;
 
   menu = (HildonAppMenu*)data;
 
@@ -316,6 +488,8 @@ powerkeymenu_create_menu(const gchar *path)
 {
   HildonAppMenu *menu;
 
+  SYSTEMUI_DEBUG_FN;
+
   powerkeymenu_init_menu(path);
 
   menu = HILDON_APP_MENU(hildon_app_menu_new());
@@ -326,14 +500,90 @@ powerkeymenu_create_menu(const gchar *path)
   return menu;
 }
 
+static void
+powerkeymenu_destroy_menu()
+{
+  if(power_key_window)
+  {
+    ipm_hide_window(power_key_window);
+    powerkeymenu_do_callback(-6, ui);
+    gtk_widget_destroy(power_key_window);
+    power_key_window = NULL;
+  }
+}
 
-#if 0
+static gboolean
+power_key_menu_unmap_event_cb(GtkWidget *widget,
+                              GdkEvent  *event,
+                              gpointer   user_data)
+{
+  SYSTEMUI_DEBUG_FN;
+
+  powerkeymenu_destroy_menu();
+  return FALSE;
+}
+
+static gboolean
+power_key_menu_delete_event_cb(GtkWidget *widget,
+                              GdkEvent  *event,
+                              gpointer   user_data)
+{
+  SYSTEMUI_DEBUG_FN;
+
+  return FALSE;
+}
+
+static gboolean
+power_key_menu_key_press_event_cb(GtkWidget *widget,
+                              GdkEvent  *event,
+                              gpointer   user_data)
+{
+  SYSTEMUI_DEBUG_FN;
+
+  return FALSE;
+}
+
+static void
+powerkeymenu_show_menu()
+{
+  SYSTEMUI_DEBUG_FN;
+
+  if(!power_key_window)
+  {
+    power_key_window = hildon_stackable_window_new ();
+
+    power_key_menu = powerkeymenu_create_menu("/etc/systemui");
+
+
+    gtk_widget_show_all(GTK_WIDGET (power_key_menu));
+#if !defined(POWERKEYMENU_STANDALONE)
+    ipm_show_window(GTK_WIDGET(power_key_menu), power_key_menu_priority);
+#endif
+    hildon_app_menu_popup(power_key_menu,GTK_WINDOW(power_key_window));
+    g_signal_connect_after(power_key_menu,
+                           "unmap-event",
+                           (GCallback)power_key_menu_unmap_event_cb,
+                           NULL);
+    g_signal_connect_after(power_key_menu,
+                           "delete-event",
+                           (GCallback)power_key_menu_delete_event_cb,
+                           NULL);
+    g_signal_connect_after(power_key_menu,
+                           "key-press-event",
+                           (GCallback)power_key_menu_key_press_event_cb,
+                           NULL);
+
+  }
+}
+
+#if !defined(POWERKEYMENU_STANDALONE)
 
 static void
 powerkeymenu_do_callback(int argc, system_ui_data *data)
 {
   do_callback(data, &power_key_menu_callback, argc);
 }
+
 
 
 static int
@@ -343,7 +593,27 @@ powerkeymenu_open_handler(const char *interface,
                           system_ui_data *data,
                           system_ui_handler_arg *out)
 {
+  int supported_args[1] = {'u'};
   SYSTEMUI_DEBUG_FN;
+
+  if(!check_plugin_arguments(args, supported_args, 1))
+    return FALSE;
+
+  if(!power_key_window)
+  {
+    powerkeymenu_show_menu();
+    state = 1;
+  }
+
+  out->arg_type = 'i';
+
+  if(check_set_callback(args, &power_key_menu_callback))
+    out->data.i32 = -3;
+  else
+    out->data.i32 = -2;
+
+  return 'i';
+
 }
 
 static int
@@ -356,9 +626,15 @@ powerkeymenu_close_handler(const char *interface,
   SYSTEMUI_DEBUG_FN;
 
   powerkeymenu_do_callback(-4, ui);
-  ipm_hide_window(power_key_menu.window);
-  gtk_widget_destroy(power_key_menu.window);
+  if(power_key_window)
+  {
+    ipm_hide_window(GTK_WIDGET(power_key_window));
+    gtk_widget_destroy(GTK_WIDGET(power_key_window));
+    power_key_window = NULL;
+  }
   systemui_free_callback(&power_key_menu_callback);
+
+  return 'v';
 }
 
 static int
@@ -446,27 +722,15 @@ void plugin_close(system_ui_data *data)
   remove_handler("powerkeymenu_getstate", data);
   remove_handler("powerkeymenu_action", data);
 
-  delete_event_cb();
-
   closelog();
 }
 
 #else
 int main(int argc, char ** argv)
 {
-  GtkWidget *win;
-  HildonAppMenu *menu;
   hildon_gtk_init(&argc, &argv);
 
-  win = hildon_stackable_window_new ();
-  menu = powerkeymenu_create_menu("/etc/systemui");
-
-  // Show all menu items
-  gtk_widget_show_all(GTK_WIDGET (menu));
-  hildon_window_set_app_menu (HILDON_WINDOW (win), menu);
-
-  //gtk_widget_realize(win);
-  gtk_widget_show_all (win);
+  powerkeymenu_show_menu();
   gtk_main();
   return 0;
 }
