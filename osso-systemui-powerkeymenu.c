@@ -318,7 +318,7 @@ powerkeymenu_button_clicked(GtkButton *button,gpointer data)
   retval = ezxml_child(ex, "return");
   callback = ezxml_child(ex, "callback");
 
-  if(retval && retval->txt)
+  if(retval)
   {
     switch(atol(retval->txt))
     {
@@ -326,7 +326,7 @@ powerkeymenu_button_clicked(GtkButton *button,gpointer data)
         hildon_banner_show_information(NULL, NULL,
                                        dgettext("osso-powerup-shutdown",
                                                 "powerup_ib_silent_activated"));
-      break;
+        break;
       case 9:
         hildon_banner_show_information(NULL, NULL,
                                        dgettext("osso-powerup-shutdown",
@@ -411,7 +411,7 @@ powerkeymenu_add_menu_entry(ezxml_t ex, void *data)
   menu = (HildonAppMenu*)data;
 
   retval = ezxml_child(ex, "return");
-  if(retval && retval->txt && atol(retval->txt) == 10)
+  if(retval && atol(retval->txt) == 10)
   {
     /* Do not add 'End current task' if the active window is desktop */
     if(powerkeymenu_is_desktop_active())
@@ -419,7 +419,7 @@ powerkeymenu_add_menu_entry(ezxml_t ex, void *data)
   }
 
   keyfile = ezxml_child(ex, "keyfile");
-  if(keyfile && keyfile->txt)
+  if(keyfile)
   {
     ezxml_t tmpex;
     const char *visible;
@@ -457,14 +457,14 @@ powerkeymenu_add_menu_entry(ezxml_t ex, void *data)
       if(disabled && !strcmp(buf, disabled))
       {
         tmpex = ezxml_child(ex, "disabled_reason");
-        if(tmpex && tmpex->txt)
+        if(tmpex)
         {
           disabled_title = ezxml_attr(tmpex, "name");
           if(disabled_title)
           {
             tmpex = ezxml_child(tmpex, "po");
 
-            if(tmpex && tmpex->txt)
+            if(tmpex)
               disabled_title = dgettext(tmpex->txt, disabled_title);
           }
         }
@@ -490,7 +490,7 @@ powerkeymenu_add_menu_entry(ezxml_t ex, void *data)
 
   if(title)
   {
-    if(po && po->txt)
+    if(po)
       title = dgettext(po->txt, title);
   }
   else
@@ -502,7 +502,7 @@ powerkeymenu_add_menu_entry(ezxml_t ex, void *data)
                                        title,
                                        enabled?NULL:disabled_title);
 
-  if(icon && icon->txt)
+  if(icon)
   {
     GtkWidget *image = NULL;
     if(g_str_has_prefix(icon->txt, "/"))
