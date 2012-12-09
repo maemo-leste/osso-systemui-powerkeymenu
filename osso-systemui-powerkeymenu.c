@@ -339,8 +339,10 @@ powerkeymenu_button_clicked(GtkButton *button,gpointer data)
     {
       if(atol(retval->txt) == 10)
         powerkeymenu_close_topmost_window();
+#if !defined(POWERKEYMENU_STANDALONE)
       else
         powerkeymenu_do_callback(atol(retval->txt), ui);
+#endif
     }
   }
 
