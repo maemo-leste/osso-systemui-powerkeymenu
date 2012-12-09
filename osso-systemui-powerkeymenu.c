@@ -611,7 +611,7 @@ powerkeymenu_show_menu()
 
   if(!power_key_window)
   {
-    power_key_window = hildon_stackable_window_new ();
+    power_key_window = gtk_window_new(GTK_WINDOW_POPUP);
 
     power_key_menu = powerkeymenu_create_menu("/etc/systemui");
 
