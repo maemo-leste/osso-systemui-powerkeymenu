@@ -813,8 +813,10 @@ void plugin_close(system_ui_data *data)
 
   remove_handler("powerkeymenu_open", data);
   remove_handler("powerkeymenu_close", data);
+#if 0
   remove_handler("powerkeymenu_getstate", data);
   remove_handler("powerkeymenu_action", data);
+#endif
 
   closelog();
 }
