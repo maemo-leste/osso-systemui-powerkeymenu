@@ -45,7 +45,7 @@
 #include "osso-systemui-powerkeymenu.h"
 #include "xmlparser.h"
 
-//#define POWERKEYMENU_STANDALONE
+/* #define POWERKEYMENU_STANDALONE */
 
 /* Globals */
 powerkeymenu_t pkmenu = {
@@ -520,7 +520,7 @@ powerkeymenu_add_menu_entry(ezxml_t ex, void *data)
 
   // Create a button and add it to the menu
   button = hildon_button_new_with_text(HILDON_SIZE_FINGER_HEIGHT,
-                                       HILDON_BUTTON_ARRANGEMENT_VERTICAL,
+                                       enabled?HILDON_BUTTON_ARRANGEMENT_HORIZONTAL:HILDON_BUTTON_ARRANGEMENT_VERTICAL,
                                        title,
                                        enabled?NULL:disabled_title);
 
