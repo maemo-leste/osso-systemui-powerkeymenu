@@ -35,13 +35,9 @@
 #include <syslog.h>
 #include <glib.h>
 #include <gtk/gtk.h>
-#include <gdk/gdkkeysyms.h>
-#include <gdk/gdkevents.h>
 #include <gdk/gdkx.h>
 #include <gconf/gconf-client.h>
-#include <pango/pango.h>
 #include <dbus/dbus.h>
-#include <clockd/libtime.h>
 #include <hildon/hildon.h>
 #include <hildon/hildon-gtk.h>
 #include <systemui.h>
