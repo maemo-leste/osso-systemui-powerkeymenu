@@ -73,8 +73,9 @@ powerkeymenu_xml_enum_menuitems(ezxml_t ex)
 
     if(menu_cnt>=POWERKEYMENU_MAX_ENTRIES)
     {
-      SYSTEMUI_ERROR("Too many menu entries, maximum supports is %d",
+      SYSTEMUI_ERROR("Too many menu entries, maximum supported - %d",
                      POWERKEYMENU_MAX_ENTRIES);
+      return FALSE;
     }
 
     ex=ex->next;
