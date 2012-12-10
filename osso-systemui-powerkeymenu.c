@@ -20,7 +20,6 @@
 #include <clockd/libtime.h>
 #include <hildon/hildon.h>
 #include <hildon/hildon-gtk.h>
-#include <sqlite3.h>
 #include <systemui.h>
 
 #include "osso-systemui-powerkeymenu.h"
@@ -29,14 +28,15 @@
 //#define POWERKEYMENU_STANDALONE
 
 /* Globals */
-system_ui_data *ui;
-system_ui_callback_t power_key_menu_callback = {0,};
+powerkeymenu_t pkmenu = {
+  .window = NULL,
+  .menu = NULL,
+  .ui = NULL,
+  .callback = {0,},
+  .window_priority = 0,
+  .state = -1
+};
 
-GtkWidget *power_key_window = NULL;
-HildonAppMenu *power_key_menu=NULL;
-
-gint state = -1;
-gint power_key_menu_priority = 0;
 
 /* Forward declarations */
 static void
@@ -341,7 +341,7 @@ powerkeymenu_button_clicked(GtkButton *button,gpointer data)
         powerkeymenu_close_topmost_window();
 #if !defined(POWERKEYMENU_STANDALONE)
       else
-        powerkeymenu_do_callback(atol(retval->txt), ui);
+        powerkeymenu_do_callback(atol(retval->txt), pkmenu.ui);
 #endif
     }
   }
@@ -560,16 +560,16 @@ powerkeymenu_create_menu(const gchar *path)
 static void
 powerkeymenu_destroy_menu()
 {
-  if(power_key_window)
+  if(pkmenu.window)
   {
 #if !defined(POWERKEYMENU_STANDALONE)
-    ipm_hide_window(power_key_window);
-    powerkeymenu_do_callback(-6, ui);
+    ipm_hide_window(pkmenu.window);
+    powerkeymenu_do_callback(-6, pkmenu.ui);
 #endif
-    gtk_widget_destroy(power_key_window);
-    power_key_window = NULL;
-    g_object_unref(power_key_menu);
-    power_key_menu = NULL;
+    gtk_widget_destroy(pkmenu.window);
+    pkmenu.window = NULL;
+    g_object_unref(pkmenu.menu);
+    pkmenu.menu = NULL;
     powerkeymenu_xml_free();
   }
 }
@@ -586,6 +586,7 @@ power_key_menu_unmap_event_cb(GtkWidget *widget,
   return FALSE;
 }
 
+#if 0
 static gboolean
 power_key_menu_delete_event_cb(GtkWidget *widget,
                               GdkEvent  *event,
@@ -605,38 +606,40 @@ power_key_menu_key_press_event_cb(GtkWidget *widget,
 
   return FALSE;
 }
+#endif
 
 static void
 powerkeymenu_show_menu()
 {
   SYSTEMUI_DEBUG_FN;
 
-  if(!power_key_window)
+  if(!pkmenu.window)
   {
-    power_key_window = gtk_window_new(GTK_WINDOW_POPUP);
+    pkmenu.window = gtk_window_new(GTK_WINDOW_POPUP);
 
-    power_key_menu = powerkeymenu_create_menu("/etc/systemui");
+    pkmenu.menu = powerkeymenu_create_menu("/etc/systemui");
 
 
-    gtk_widget_show_all(GTK_WIDGET (power_key_menu));
+    gtk_widget_show_all(GTK_WIDGET (pkmenu.menu));
 #if !defined(POWERKEYMENU_STANDALONE)
-    ipm_show_window(GTK_WIDGET(power_key_menu), power_key_menu_priority);
+    ipm_show_window(GTK_WIDGET(pkmenu.menu), pkmenu.window_priority);
 #endif
-    hildon_app_menu_popup(power_key_menu,GTK_WINDOW(power_key_window));
+    hildon_app_menu_popup(pkmenu.menu,GTK_WINDOW(pkmenu.window));
 
-    g_signal_connect_after(power_key_menu,
+    g_signal_connect_after(pkmenu.menu,
                            "unmap-event",
                            (GCallback)power_key_menu_unmap_event_cb,
                            NULL);
-    g_signal_connect_after(power_key_menu,
+#if 0
+    g_signal_connect_after(pkmenu.menu,
                            "delete-event",
                            (GCallback)power_key_menu_delete_event_cb,
                            NULL);
-    g_signal_connect_after(power_key_menu,
+    g_signal_connect_after(pkmenu.menu,
                            "key-press-event",
                            (GCallback)power_key_menu_key_press_event_cb,
                            NULL);
-
+#endif
   }
 }
 
@@ -645,7 +648,7 @@ powerkeymenu_show_menu()
 static void
 powerkeymenu_do_callback(int argc, system_ui_data *data)
 {
-  do_callback(data, &power_key_menu_callback, argc);
+  do_callback(data, &pkmenu.callback, argc);
 }
 
 
@@ -663,15 +666,15 @@ powerkeymenu_open_handler(const char *interface,
   if(!check_plugin_arguments(args, supported_args, 1))
     return FALSE;
 
-  if(!power_key_window)
+  if(!pkmenu.window)
   {
     powerkeymenu_show_menu();
-    state = 1;
+    pkmenu.state = 1;
   }
 
   out->arg_type = 'i';
 
-  if(check_set_callback(args, &power_key_menu_callback))
+  if(check_set_callback(args, &pkmenu.callback))
     out->data.i32 = -3;
   else
     out->data.i32 = -2;
@@ -689,22 +692,23 @@ powerkeymenu_close_handler(const char *interface,
 {
   SYSTEMUI_DEBUG_FN;
 
-  powerkeymenu_do_callback(-4, ui);
-  if(power_key_window)
+  powerkeymenu_do_callback(-4, pkmenu.ui);
+  if(pkmenu.window)
   {
-    ipm_hide_window(GTK_WIDGET(power_key_window));
-    gtk_widget_destroy(GTK_WIDGET(power_key_window));
-    power_key_window = NULL;
-    g_object_unref(power_key_menu);
-    power_key_menu = NULL;
+    ipm_hide_window(GTK_WIDGET(pkmenu.window));
+    gtk_widget_destroy(GTK_WIDGET(pkmenu.window));
+    pkmenu.window = NULL;
+    g_object_unref(pkmenu.menu);
+    pkmenu.menu = NULL;
     powerkeymenu_xml_free();
   }
 
-  systemui_free_callback(&power_key_menu_callback);
+  systemui_free_callback(&pkmenu.callback);
 
   return 'v';
 }
 
+#if 0
 static int
 powerkeymenu_getstate_handler(const char *interface,
                               const char *method,
@@ -714,7 +718,7 @@ powerkeymenu_getstate_handler(const char *interface,
 {
   SYSTEMUI_DEBUG_FN;
 
-  if(state != -1)
+  if(pkmenu.state != -1)
     out->data.bool_val = TRUE;
   else
     out->data.bool_val = FALSE;
@@ -739,6 +743,7 @@ powerkeymenu_action_handler(const char *interface,
 
   return 'b';
 }
+#endif
 
 gboolean
 plugin_init(system_ui_data *data)
@@ -753,16 +758,17 @@ plugin_init(system_ui_data *data)
     return FALSE;
   }
 
-  ui = data;
+  pkmenu.ui = data;
 
   systemui_add_handler("powerkeymenu_open",
                        powerkeymenu_open_handler,
-                       ui);
+                       pkmenu.ui);
 
   systemui_add_handler("powerkeymenu_close",
                        powerkeymenu_close_handler,
-                       ui);
+                       pkmenu.ui);
 
+#if 0
   systemui_add_handler("powerkeymenu_getstate",
                        powerkeymenu_getstate_handler,
                        ui);
@@ -770,13 +776,13 @@ plugin_init(system_ui_data *data)
   systemui_add_handler("powerkeymenu_action",
                        powerkeymenu_action_handler,
                        ui);
+#endif
 
-  power_key_menu_priority = gconf_client_get_int(ui->gc_client,
-                                                 "/system/systemui/powerkeymenu/window_priority",
-                                                 NULL);
-
-  if(power_key_menu_priority == 0)
-    power_key_menu_priority = 195;
+  pkmenu.window_priority = gconf_client_get_int(pkmenu.ui->gc_client,
+                                                "/system/systemui/powerkeymenu/window_priority",
+                                                0);
+  if(pkmenu.window_priority == 0)
+    pkmenu.window_priority = 195;
 
   return TRUE;
 }
