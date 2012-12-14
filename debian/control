@@ -18,3 +18,10 @@ Section: devel
 Depends: osso-systemui-powerkeymenu (= ${Source-Version})
 Description: Power key menu debug symbls
  This package contains the Power key menu debug symbls
+
+Package: osso-systemui-powerkeymenu-dev
+Architecture: all
+Section: devel
+Depends: ${shlibs:Depends}
+Description: Power key menu development files
+ This package contains the Power key menu development files
