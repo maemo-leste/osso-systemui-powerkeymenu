@@ -41,11 +41,20 @@
 #include <hildon/hildon.h>
 #include <hildon/hildon-gtk.h>
 #include <systemui.h>
+#include <systemui/powerkeymenu-dbus-names.h>
 
-#include "osso-systemui-powerkeymenu.h"
 #include "xmlparser.h"
 
 /* #define POWERKEYMENU_STANDALONE */
+
+typedef struct {
+  GtkWidget *window;
+  HildonAppMenu *menu;
+  system_ui_data *ui;
+  system_ui_callback_t callback;
+  gint window_priority;
+  gint state;
+}powerkeymenu_t;
 
 /* Globals */
 powerkeymenu_t pkmenu = {
@@ -780,11 +789,11 @@ plugin_init(system_ui_data *data)
 
   pkmenu.ui = data;
 
-  systemui_add_handler("powerkeymenu_open",
+  systemui_add_handler(SYSTEMUI_POWERKEYMENU_OPEN_REQ,
                        powerkeymenu_open_handler,
                        pkmenu.ui);
 
-  systemui_add_handler("powerkeymenu_close",
+  systemui_add_handler(SYSTEMUI_POWERKEYMENU_CLOSE_REQ,
                        powerkeymenu_close_handler,
                        pkmenu.ui);
 
@@ -811,8 +820,8 @@ void plugin_close(system_ui_data *data)
 {
   SYSTEMUI_DEBUG_FN;
 
-  remove_handler("powerkeymenu_open", data);
-  remove_handler("powerkeymenu_close", data);
+  remove_handler(SYSTEMUI_POWERKEYMENU_OPEN_REQ, data);
+  remove_handler(SYSTEMUI_POWERKEYMENU_CLOSE_REQ, data);
 #if 0
   remove_handler("powerkeymenu_getstate", data);
   remove_handler("powerkeymenu_action", data);
