@@ -1,3 +1,8 @@
+osso-systemui-powerkeymenu (0.3.0.2+0cssu0) unstable; urgency=low
+
+  * Fix callback 'autostart' argument handling
+
+ -- Ivaylo Dimmitrov <freemangordon@abv.bg>  Mon, 10 Dec 2012 11:39:51 +0200
 osso-systemui-powerkeymenu (0.3.0.1+0cssu0) unstable; urgency=low
 
   * Fix text alignment in menu buttons
