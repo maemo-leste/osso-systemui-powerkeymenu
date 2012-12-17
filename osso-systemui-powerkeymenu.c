@@ -400,10 +400,15 @@ powerkeymenu_button_clicked(GtkButton *button,gpointer data)
     {
       DBusConnection *connection;
 
-      if(autostart && !(strcmp(autostart, "yes")))
-        dbus_message_set_auto_start(msg, TRUE);
-      else
-        dbus_message_set_auto_start(msg, FALSE);
+      if(autostart)
+      {
+        if(!strcmp(autostart, "true"))
+          dbus_message_set_auto_start(msg, TRUE);
+        else if (!strcmp(autostart, "false"))
+          dbus_message_set_auto_start(msg, FALSE);
+        else
+          SYSTEMUI_WARNING("Invalid callback autostart value[%s]", autostart);
+      }
 
       dbus_message_set_no_reply(msg, TRUE);
       powerkeymenu_dbus_message_append_args(msg, ezxml_child(callback, "argument"));
