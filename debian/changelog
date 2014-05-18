@@ -1,13 +1,21 @@
+osso-systemui-powerkeymenu (0.3.0.3+0cssu0) unstable; urgency=low
+
+  * Add power_key_mode and power_key_menu_response to powerkeymenu-dbus-names.h
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Sun, 18 May 2014 18:23:52 +0200
+
 osso-systemui-powerkeymenu (0.3.0.2+0cssu0) unstable; urgency=low
 
   * Fix callback 'autostart' argument handling
 
  -- Ivaylo Dimmitrov <freemangordon@abv.bg>  Mon, 10 Dec 2012 11:39:51 +0200
+
 osso-systemui-powerkeymenu (0.3.0.1+0cssu0) unstable; urgency=low
 
   * Fix text alignment in menu buttons
 
  -- Ivaylo Dimmitrov <freemangordon@abv.bg>  Mon, 10 Dec 2012 11:39:51 +0200
+
 osso-systemui-powerkeymenu (0.3.0.0+0m5) unstable; urgency=low
 
   * Initial release
