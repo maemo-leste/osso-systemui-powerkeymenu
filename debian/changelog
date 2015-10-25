@@ -1,3 +1,9 @@
+osso-systemui-powerkeymenu (0.3.0.4+0cssu0) unstable; urgency=low
+
+  * Update parameters for window hide/show functions
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Sun, 25 Oct 2015 00:01:35 -0400
+
 osso-systemui-powerkeymenu (0.3.0.3+0cssu0) unstable; urgency=low
 
   * Add power_key_mode and power_key_menu_response to powerkeymenu-dbus-names.h
