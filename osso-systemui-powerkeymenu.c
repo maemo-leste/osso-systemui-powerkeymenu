@@ -597,7 +597,7 @@ powerkeymenu_destroy_menu()
   if(pkmenu.window)
   {
 #if !defined(POWERKEYMENU_STANDALONE)
-    ipm_hide_window(GTK_WINDOW(pkmenu.window));
+    ipm_hide_window(pkmenu.window);
     powerkeymenu_do_callback(-6, pkmenu.ui);
 #endif
     gtk_widget_destroy(pkmenu.window);
@@ -656,7 +656,7 @@ powerkeymenu_show_menu()
 
     gtk_widget_show_all(GTK_WIDGET (pkmenu.menu));
 #if !defined(POWERKEYMENU_STANDALONE)
-    ipm_show_window(GTK_WINDOW(pkmenu.menu), pkmenu.window_priority);
+    ipm_show_window(GTK_WIDGET(pkmenu.menu), pkmenu.window_priority);
 #endif
     hildon_app_menu_popup(pkmenu.menu,GTK_WINDOW(pkmenu.window));
 
@@ -729,7 +729,7 @@ powerkeymenu_close_handler(const char *interface,
   powerkeymenu_do_callback(-4, pkmenu.ui);
   if(pkmenu.window)
   {
-    ipm_hide_window(GTK_WINDOW(pkmenu.window));
+    ipm_hide_window(pkmenu.window);
     gtk_widget_destroy(GTK_WIDGET(pkmenu.window));
     pkmenu.window = NULL;
     g_object_unref(pkmenu.menu);
