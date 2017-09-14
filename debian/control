@@ -15,7 +15,7 @@ Description: Power key menu
 Package: osso-systemui-powerkeymenu-dbg
 Architecture: any
 Section: devel
-Depends: osso-systemui-powerkeymenu (= ${Source-Version})
+Depends: osso-systemui-powerkeymenu (= ${source:Version})
 Description: Power key menu debug symbls
  This package contains the Power key menu debug symbls
 
