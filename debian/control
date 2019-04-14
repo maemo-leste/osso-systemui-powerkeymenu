@@ -2,7 +2,7 @@ Source: osso-systemui-powerkeymenu
 Section: misc
 Maintainer: Ivaylo Dimmitrov <freemangordon@abv.bg>
 Build-Depends:
- debhelper (>= 5),
+ debhelper (>= 10),
  pkg-config,
  libhildon1-dev,
  libgconf2-dev,
