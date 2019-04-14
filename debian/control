@@ -1,21 +1,35 @@
 Source: osso-systemui-powerkeymenu
 Section: misc
 Maintainer: Ivaylo Dimmitrov <freemangordon@abv.bg>
-Build-Depends: debhelper (>= 5), pkg-config, libhildon1-dev, libgconf2-dev,
- libgtk2.0-dev, libdbus-1-dev, libglib2.0-dev, osso-systemui-dev, libx11-dev
+Build-Depends:
+ debhelper (>= 5),
+ pkg-config,
+ libhildon1-dev,
+ libgconf2-dev,
+ libgtk2.0-dev,
+ libdbus-1-dev,
+ libglib2.0-dev,
+ osso-systemui-dev,
+ libx11-dev,
 Priority: optional
 Standards-Version: 3.7.2
 
 Package: osso-systemui-powerkeymenu
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, osso-systemui (>= 0.2.0), osso-powerup-shutdown-l10n-mr0 | osso-powerup-shutdown-l10n-mr, hildon-libs-l10n-mr | hildon-libs-l10n-mr0
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ osso-systemui (>= 0.2.0),
+ osso-powerup-shutdown-l10n-mr0 | osso-powerup-shutdown-l10n-mr,
+ hildon-libs-l10n-mr | hildon-libs-l10n-mr0,
 Description: Power key menu
  This package contains the Power key menu
 
 Package: osso-systemui-powerkeymenu-dbg
 Architecture: any
 Section: devel
-Depends: osso-systemui-powerkeymenu (= ${source:Version})
+Depends:
+ osso-systemui-powerkeymenu (= ${source:Version}),
 Description: Power key menu debug symbls
  This package contains the Power key menu debug symbls
 
