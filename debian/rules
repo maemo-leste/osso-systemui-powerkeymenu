@@ -2,14 +2,6 @@
 # Sample debian/rules that uses debhelper.
 # This file was originally written by Joey Hess and Craig Small.
 
-CFLAGS := -ggdb
-
-ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-	CFLAGS += -O0
-else
-	CFLAGS += -O2
-endif
-
 build:
 	dh_testdir
 	CFLAGS="$(CFLAGS)" $(MAKE)
