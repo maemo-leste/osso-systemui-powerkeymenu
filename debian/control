@@ -25,6 +25,7 @@ Description: Power key menu
 
 Package: osso-systemui-powerkeymenu-dev
 Architecture: all
+Multi-arch: foreign
 Section: devel
 Description: Power key menu development files
  This package contains the Power key menu development files
