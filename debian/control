@@ -12,30 +12,19 @@ Build-Depends:
  osso-systemui-dev,
  libx11-dev,
 Priority: optional
-Standards-Version: 3.7.2
+Standards-Version: 4.3.0
 
 Package: osso-systemui-powerkeymenu
 Architecture: any
 Depends:
- ${shlibs:Depends},
- ${misc:Depends},
  osso-systemui (>= 0.2.0),
  osso-powerup-shutdown-l10n-mr0 | osso-powerup-shutdown-l10n-mr,
  hildon-libs-l10n-mr | hildon-libs-l10n-mr0,
 Description: Power key menu
  This package contains the Power key menu
 
-Package: osso-systemui-powerkeymenu-dbg
-Architecture: any
-Section: devel
-Depends:
- osso-systemui-powerkeymenu (= ${source:Version}),
-Description: Power key menu debug symbls
- This package contains the Power key menu debug symbls
-
 Package: osso-systemui-powerkeymenu-dev
 Architecture: all
 Section: devel
-Depends: ${shlibs:Depends}
 Description: Power key menu development files
  This package contains the Power key menu development files
