@@ -2,7 +2,7 @@ Source: osso-systemui-powerkeymenu
 Section: misc
 Maintainer: Ivaylo Dimmitrov <freemangordon@abv.bg>
 Build-Depends:
- debhelper (>= 10),
+ debhelper-compat (= 12),
  pkg-config,
  libhildon1-dev,
  libgconf2-dev,
@@ -17,6 +17,8 @@ Standards-Version: 4.3.0
 Package: osso-systemui-powerkeymenu
 Architecture: any
 Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
  osso-systemui (>= 0.2.0),
  osso-powerup-shutdown-l10n-mr0 | osso-powerup-shutdown-l10n-mr,
  hildon-libs-l10n-mr | hildon-libs-l10n-mr0,
@@ -27,5 +29,9 @@ Package: osso-systemui-powerkeymenu-dev
 Architecture: all
 Multi-arch: foreign
 Section: devel
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ osso-systemui-powerkeymenu (= ${binary:Version}),
 Description: Power key menu development files
  This package contains the Power key menu development files
