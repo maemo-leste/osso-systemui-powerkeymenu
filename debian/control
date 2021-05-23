@@ -30,7 +30,6 @@ Architecture: all
 Multi-arch: foreign
 Section: devel
 Depends:
- ${shlibs:Depends},
  ${misc:Depends},
  osso-systemui-powerkeymenu (= ${binary:Version}),
 Description: Power key menu development files

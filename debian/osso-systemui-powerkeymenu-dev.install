@@ -1,1 +1,1 @@
-include/systemui/powerkeymenu-dbus-names.h /usr/include/systemui
+/include/systemui/powerkeymenu-dbus-names.h /usr/include/systemui

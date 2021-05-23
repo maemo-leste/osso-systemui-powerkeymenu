@@ -1,1 +1,2 @@
-libsystemuiplugin_power_key_menu.so /usr/lib/systemui/
+/usr/lib/systemui/*
+/etc/systemui/*
