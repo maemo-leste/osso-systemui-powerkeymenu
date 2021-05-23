@@ -34,6 +34,9 @@
  */
 #define SYSTEMUI_POWERKEYMENU_CLOSE_REQ    "powerkeymenu_close"
 
+#define SYSTEMUI_POWERKEYMENU_GETSTATE_REQ  "powerkeymenu_getstate"
+#define SYSTEMUI_POWERKEYMENU_ACTION_REQ    "powerkeymenu_action"
+
 typedef enum {
 	MODE_NORMAL,
 	MODE_FLIGHT
