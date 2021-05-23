@@ -67,7 +67,7 @@ ezxml_t ezxml_child(ezxml_t xml, const char *name)
     while (xml && strcmp(name, xml->name)) xml = xml->sibling;
     return xml;
 }
-
+#if 0
 // returns the Nth tag with the same name in the same subsection or NULL if not
 // found
 static ezxml_t ezxml_idx(ezxml_t xml, int idx)
@@ -75,7 +75,7 @@ static ezxml_t ezxml_idx(ezxml_t xml, int idx)
     for (; xml && idx; idx--) xml = xml->next;
     return xml;
 }
-
+#endif
 // returns the value of the requested tag attribute or NULL if not found
 const char *ezxml_attr(ezxml_t xml, const char *attr)
 {
@@ -92,7 +92,7 @@ const char *ezxml_attr(ezxml_t xml, const char *attr)
     while (root->attr[i][j] && strcmp(attr, root->attr[i][j])) j += 3;
     return (root->attr[i][j]) ? root->attr[i][j + 1] : NULL; // found default
 }
-
+#if 0
 // same as ezxml_get but takes an already initialized va_list
 static ezxml_t ezxml_vget(ezxml_t xml, va_list ap)
 {
@@ -105,7 +105,7 @@ static ezxml_t ezxml_vget(ezxml_t xml, va_list ap)
     }
     return (idx < 0) ? xml : ezxml_vget(ezxml_idx(xml, idx), ap);
 }
-#if 0
+
 // Traverses the xml tree to retrieve a specific subtag. Takes a variable
 // length list of tag names and indexes. The argument list must be terminated
 // by either an index of -1 or an empty string tag name. Example:
@@ -359,13 +359,14 @@ static short ezxml_internal_dtd(ezxml_root_t root, char *s, size_t len)
             else ent[i] = n; // set entity name
         }
         else if (! strncmp(s, "<!ATTLIST", 9)) { // parse default attributes
+            char *p;
             t = s + strspn(s + 9, EZXML_WS) + 9; // skip whitespace separator
             if (! *t) { ezxml_err(root, t, "unclosed <!ATTLIST"); break; }
             if (*(s = t + strcspn(t, EZXML_WS ">")) == '>') continue;
             else *s = '\0'; // null terminate tag name
             for (i = 0; root->attr[i] && strcmp(n, root->attr[i][0]); i++);
 
-            while (*(n = ++s + strspn(s, EZXML_WS)) && *n != '>') {
+            while (p = ++s, *(n = p + strspn(p, EZXML_WS)) && *n != '>') {
                 if (*(s = n + strcspn(n, EZXML_WS))) *s = '\0'; // attr name
                 else { ezxml_err(root, t, "malformed <!ATTLIST"); break; }
 
@@ -665,7 +666,7 @@ ezxml_t ezxml_parse_file(const char *file)
     if (fd >= 0) close(fd);
     return xml;
 }
-
+#if 0
 // Encodes ampersand sequences appending the results to *dst, reallocating *dst
 // if length excedes max. a is non-zero for attribute encoding. Returns *dst
 static char *ezxml_ampencode(const char *s, size_t len, char **dst, size_t *dlen,
@@ -743,7 +744,7 @@ static char *ezxml_toxml_r(ezxml_t xml, char **s, size_t *len, size_t *max,
     return (xml->ordered) ? ezxml_toxml_r(xml->ordered, s, len, max, off, attr)
                           : ezxml_ampencode(txt + off, -1, s, len, max, 0);
 }
-#if 0
+
 // Converts an ezxml structure back to xml. Returns a string of xml data that
 // must be freed.
 static char *ezxml_toxml(ezxml_t xml)
