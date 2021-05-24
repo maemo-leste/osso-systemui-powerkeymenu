@@ -786,7 +786,7 @@ powerkeymenu_action_handler(const char *interface,
 gboolean
 plugin_init(system_ui_data *data)
 {
-#if !defined(POWERKEYMENU_STANDALONE)
+#if defined(POWERKEYMENU_STANDALONE)
   openlog("systemui-powerkeymenu", LOG_ALERT | LOG_USER, LOG_NDELAY);
 #endif
 
@@ -833,7 +833,7 @@ plugin_close(system_ui_data *data)
   remove_handler(SYSTEMUI_POWERKEYMENU_ACTION_REQ, data);
   power_key_menu_delete_event_cb(GTK_WIDGET(pkmenu.menu), NULL, NULL);
   powerkeymenu_xml_free();
-#if !defined(POWERKEYMENU_STANDALONE)
+#if defined(POWERKEYMENU_STANDALONE)
   closelog();
 #endif
 }
