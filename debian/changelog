@@ -1,3 +1,8 @@
+osso-systemui-powerkeymenu (0.4.2) unstable; urgency=medium
+  * Changed cflags for compatibility with GCC 10+
+
+ -- Blagovest Petrov <blagovest@petrovs.info> Sat, 26 Nov 2022 2:26:57 +0200
+
 osso-systemui-powerkeymenu (0.4.1) unstable; urgency=medium
 
   * Do not override log ident set by systemui when not standalone
